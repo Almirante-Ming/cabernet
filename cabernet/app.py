@@ -12,7 +12,7 @@ cabernet.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 db.init_app(cabernet)
-migrate.init_app(cabernet)
+migrate.init_app(cabernet, db)
 
 @cabernet.route('/', methods=['GET'])
 def read_root():
