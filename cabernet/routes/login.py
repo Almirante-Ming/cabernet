@@ -1,7 +1,7 @@
 from cabernet.config import db, User_type
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from cabernet.models import User
+from cabernet.models.users import User
 from flask_jwt_extended import create_access_token
 from http import HTTPStatus
 
@@ -11,19 +11,20 @@ auth = Blueprint('auth', __name__)
 def register_user():
     data = request.get_json()
     name = data.get('name')
+    email = data.get('email')
     password = data.get('password')
     u_type = data.get('u_type', User_type.USER.value)
 
-    if not name or not password:
-        return jsonify({'message': 'Nome de usuário e senha são obrigatórios.'}), HTTPStatus.BAD_REQUEST
+    if not name or not email or not password:
+        return jsonify({'message': 'Nome de usuário, email e senha são obrigatórios.'}), HTTPStatus.BAD_REQUEST
 
-    existing_user = User.query.filter_by(name=name).first()
+    existing_user = User.query.filter_by(email=email).first()
     if existing_user:
-        return jsonify({'message': 'Usuário com este nome já existe.'}), HTTPStatus.CONFLICT
+        return jsonify({'message': 'Usuário com este email já existe.'}), HTTPStatus.CONFLICT
 
     hashed_password = generate_password_hash(password, method='scrypt')
 
-    new_user = User(name=name, u_type=User_type(u_type), password_hash=hashed_password) #type: ignore
+    new_user = User(name=name, email=email, u_type=User_type(u_type), password=hashed_password) #type: ignore
     db.session.add(new_user)
     db.session.commit()
 
@@ -32,13 +33,13 @@ def register_user():
 @auth.route('/login', methods=['POST'])
 def login_auth():
     data = request.get_json()
-    login_id = data.get('identification')
+    login_email = data.get('email')
     login_pass = data.get('password')
 
-    user = User.query.filter_by(name=login_id).first()
+    user = User.query.filter_by(email=login_email).first()
 
-    if user and check_password_hash(user.password_hash, login_pass):
-        access_token = create_access_token(identity={'id': user.id, 'name': user.name, 'u_type': user.u_type.value})
+    if user and check_password_hash(user.password, login_pass):
+        access_token = create_access_token(identity={'id': user.id, 'name': user.name, 'email': user.email, 'u_type': user.u_type.value}) # Inclua email no JWT
         return jsonify(access_token=access_token), HTTPStatus.OK
     else:
-        return jsonify({'message': 'Credenciais inválidas.'}), HTTPStatus.FORBIDDEN
+        return jsonify({'message': 'Credenciais inválidas (email ou senha incorretos).'}), HTTPStatus.FORBIDDEN
