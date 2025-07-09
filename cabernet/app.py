@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from cabernet.config import db, migrate
+from cabernet.routes import auth,course_bp,lab_bp,schedule_bp, student_bp,user_bp
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 import os
@@ -16,8 +17,12 @@ db.init_app(cabernet)
 migrate.init_app(cabernet, db)
 jwt = JWTManager(cabernet) 
 
-from cabernet.routes.login import auth as auth_blueprint
-cabernet.register_blueprint(auth_blueprint)
+cabernet.register_blueprint(auth)
+cabernet.register_blueprint(course_bp)
+cabernet.register_blueprint(lab_bp)
+cabernet.register_blueprint(schedule_bp)
+cabernet.register_blueprint(student_bp)
+cabernet.register_blueprint(user_bp)
 
 
 @cabernet.route('/', methods=['GET'])

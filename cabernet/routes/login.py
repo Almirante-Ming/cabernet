@@ -16,11 +16,11 @@ def register_user():
     u_type = data.get('u_type', User_type.USER.value)
 
     if not name or not email or not password:
-        return jsonify({'message': 'Nome de usuário, email e senha são obrigatórios.'}), HTTPStatus.BAD_REQUEST
+        return jsonify({'message': 'all fields are required'}), HTTPStatus.BAD_REQUEST
 
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
-        return jsonify({'message': 'Usuário com este email já existe.'}), HTTPStatus.CONFLICT
+        return jsonify({'message': 'user aready exists'}), HTTPStatus.CONFLICT
 
     hashed_password = generate_password_hash(password, method='scrypt')
 
@@ -28,7 +28,7 @@ def register_user():
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message': 'Usuário cadastrado com sucesso!'}), HTTPStatus.CREATED
+    return jsonify({'message': 'user created'}), HTTPStatus.CREATED
 
 @auth.route('/login', methods=['POST'])
 def login_auth():
@@ -42,4 +42,4 @@ def login_auth():
         access_token = create_access_token(identity={'id': user.id, 'name': user.name, 'email': user.email, 'u_type': user.u_type.value}) # Inclua email no JWT
         return jsonify(access_token=access_token), HTTPStatus.OK
     else:
-        return jsonify({'message': 'Credenciais inválidas (email ou senha incorretos).'}), HTTPStatus.FORBIDDEN
+        return jsonify({'message': 'invalid credentials.'}), HTTPStatus.FORBIDDEN
